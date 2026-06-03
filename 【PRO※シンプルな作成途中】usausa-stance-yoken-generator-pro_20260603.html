@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="ja">
+<!--
+=========================================================
+ うさうさ研修工房 ／ 聞きに行くスタンス × 要件詰めジェネレーター
+ Version : v3.8.0 (Pro / Stable)
+ Build   : 2026-06-03
+ QA      : jsdom 自動テスト E2E / Robustness = ALL PASS
+ ---------------------------------------------------------
+ CHANGELOG
+ v1.0.0   ふんわり指摘→聞きに行くスタンス（ラーメン屋編／法人）2タブ
+ v2.0.0   法人を現役エンジニア粒度に（Why/What/How・意図・背景前提・例外・要件・運用）
+ v2.1-2.4 タブ→選択ボタン→ヘッダー配置、①橙/②緑で色分け、両版同時生成で即切替
+ v2.5.0   DL（Notionメモ.md/PDF/CSV）＋Slack相談たたき台＋個人情報チェック
+ v2.6.0   遊び心アニメ（ロゴ揺れ／湯気／雪／のぞきうさぎ／カード登場）
+ v3.0.0   札幌駅前・夜の屋台 × チャルメラ × 少しメルヘンへ全面デザイン
+ v3.1.0   ②法人選択時は真面目なコーポレートデザインへ切替
+ v3.2.0   ①雑談・軽い指摘 対応 ／ ②ISO形式 手順書 セクションを追加
+ v3.3.0   ①ラーメン屋編の配色を少し淡く（コーラル／薄暮）
+ v3.4.0   商用レベルQA通過を確認し、安定版として刻印
+ v3.5.0   AI生成「使う／使わない」オプション追加（既定=使わない・通信なしの手動モード）
+ v3.6.0   手動モードに記入ガイド（プレースホルダー）／「使う（自前キー）」モード追加（社内Claude API・プロキシURL対応）
+ v3.7.0   「使い方・セキュリティ」説明セクション（折りたたみ）を追加し、商用QA通過で刻印
+ v3.8.0   Pro版：ファイル名（HTML／各DL／PDF）に pro を付与、PRO バッジ表示
+=========================================================
+-->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>聞きに行くスタンス × 要件詰め ジェネレーター｜うさうさ研修工房 🐰</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&family=Yusei+Magic&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --orange:#F5821F;--orange-deep:#E26A06;--orange-soft:#FFD9AE;
+    --navy:#16304F;--navy-soft:#2C4A6E;--mint:#1FB89A;--mint-soft:#C7F0E6;
+    --cream:#FFF7EE;--paper:#FFFFFF;--ink:#1B2A3A;--muted:#6B7C8C;--line:#EADBC8;
+    --shadow:0 10px 30px rgba(22,48,79,.10);--shadow-sm:0 4px 14px rgba(22,48,79,.08);
+    --round:'M PLUS Rounded 1c','Yu Gothic UI','Hiragino Maru Gothic ProN',sans-serif;
+    --body:'Yu Gothic UI','Yu Gothic','Hiragino Kaku Gothic ProN','M PLUS Rounded 1c',sans-serif;
+  }
+  *{box-sizing:border-box}html,body{margin:0}
+  body{font-family:var(--body);color:var(--ink);line-height:1.7;
+    background:radial-gradient(circle at 12% -10%,#FFE9CF 0,transparent 40%),radial-gradient(circle at 95% 0%,#DBF4EC 0,transparent 35%),var(--cream);
+    background-attachment:fixed;padding:0 16px 64px}
+  .wrap{max-width:1080px;margin:0 auto}
+  header.brand{margin:22px auto 18px;padding:20px 24px;border-radius:22px;background:linear-gradient(120deg,var(--navy),#1d3e64 70%);color:#fff;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  header.brand::after{content:"🍜";position:absolute;right:-8px;bottom:-22px;font-size:120px;opacity:.10;transform:rotate(-8deg)}
+  .brandrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .logo{width:54px;height:54px;border-radius:16px;flex:0 0 auto;background:linear-gradient(135deg,var(--orange),#ffae5c);display:grid;place-items:center;font-size:30px;box-shadow:0 6px 16px rgba(245,130,31,.45)}
+  .brandtext h1{font-family:var(--round);font-weight:800;margin:0;font-size:1.2rem}
+  .brandtext .sub{font-size:.82rem;opacity:.85;margin-top:2px}
+  .kobo{font-family:var(--round);font-weight:700;font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;opacity:.8;display:flex;align-items:center;gap:6px}
+  .tagline{margin-top:14px;font-family:var(--round);font-weight:500;font-size:.95rem;border-left:4px solid var(--orange);padding-left:12px;opacity:.95}
+  .verpill{font-family:var(--round);font-weight:700;font-size:.7rem;background:rgba(255,255,255,.16);padding:3px 10px;border-radius:999px;margin-left:auto}
+  .method{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:16px 18px;box-shadow:var(--shadow-sm);margin-bottom:18px}
+  .method .big{font-family:var(--round);font-weight:800;color:var(--navy);font-size:1.0rem}
+  .method .big b{color:var(--orange-deep)}
+  .method .sm{font-size:.86rem;color:var(--navy-soft);margin-top:6px}
+  .grid{display:grid;grid-template-columns:1fr;gap:18px}
+  @media(min-width:920px){.grid{grid-template-columns:.9fr 1.1fr}}
+  .panel{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow-sm)}
+  .panel h2{font-family:var(--round);font-weight:800;color:var(--navy);font-size:1.04rem;margin:0 0 14px;display:flex;align-items:center;gap:8px}
+  .panel h2 .dot{width:10px;height:10px;border-radius:50%;background:var(--orange)}
+  label.field{display:block;margin-bottom:14px}
+  label.field .lab{font-family:var(--round);font-weight:700;font-size:.82rem;color:var(--navy-soft);margin-bottom:6px;display:flex;gap:6px;align-items:center}
+  .lab .req{color:#fff;background:var(--orange);font-size:.64rem;padding:1px 7px;border-radius:999px;font-weight:700}
+  textarea,input[type=text],select{width:100%;font-family:var(--body);font-size:.95rem;color:var(--ink);border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;background:#fffdfa;transition:border-color .15s,box-shadow .15s;resize:vertical}
+  textarea{min-height:92px;line-height:1.6}
+  textarea:focus,input:focus,select:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,130,31,.16)}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:520px){.row2{grid-template-columns:1fr}}
+  .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+  button{font-family:var(--round);font-weight:700;cursor:pointer;border:none;border-radius:12px;transition:transform .08s,box-shadow .15s,background .15s}
+  button:active{transform:translateY(1px)}
+  .btn-main{background:linear-gradient(135deg,var(--orange),var(--orange-deep));color:#fff;padding:13px 20px;font-size:1rem;box-shadow:0 6px 16px rgba(245,130,31,.38);flex:1;min-width:200px}
+  .btn-main:hover{box-shadow:0 9px 22px rgba(245,130,31,.5)}.btn-main:disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
+  .btn-ghost{background:#fff;border:1.5px solid var(--line);color:var(--navy);padding:13px 16px}.btn-ghost:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .headtabs{display:flex;gap:10px;margin-top:14px;position:relative;z-index:1}
+  .htab{flex:1;padding:11px 10px;border-radius:12px;border:2px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);color:#fff;font-family:var(--round);font-weight:700;font-size:.92rem;display:flex;align-items:center;justify-content:center;gap:7px;position:relative;cursor:pointer;transition:background .15s,border-color .15s,box-shadow .15s}
+  .htab:hover{background:rgba(255,255,255,.18)}
+  .htab .em{font-size:1.15rem}
+  .htab.active::after{content:"✓";position:absolute;right:11px;font-weight:800;font-size:.85rem}
+  .htab[data-tone="ramen"].active{background:linear-gradient(135deg,var(--orange),var(--orange-deep));border-color:var(--orange);box-shadow:0 5px 14px rgba(245,130,31,.45)}
+  .htab[data-tone="serious"].active{background:linear-gradient(135deg,var(--mint),#159e85);border-color:var(--mint);box-shadow:0 5px 14px rgba(31,184,154,.45)}
+  #output.mode-serious .step{background:var(--mint)}
+  .tonebadge{font-family:var(--round);font-weight:700;font-size:.76rem;padding:6px 10px;border-radius:9px;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+  .tonebadge.ramen{background:#FFE6CC;color:var(--orange-deep)}.tonebadge.serious{background:var(--mint-soft);color:#0a463a}
+  #output{display:none}
+  .empty{text-align:center;color:var(--muted);padding:40px 10px;font-size:.92rem}
+  .empty .rab{font-size:46px;display:block;margin-bottom:8px;animation:hop 1.6s ease-in-out infinite}
+  @keyframes hop{0%,100%{transform:translateY(0)}30%{transform:translateY(-9px)}45%{transform:translateY(0)}}
+  .card{border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:13px;background:#fffdfa;animation:rise .35s ease both}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .card .ch{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+  .card .ico{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:15px;flex:0 0 auto;font-family:var(--round);font-weight:800;color:var(--navy)}
+  .card .tt{font-family:var(--round);font-weight:800;color:var(--navy);font-size:.96rem}
+  .card .step{font-family:var(--round);font-weight:800;color:#fff;background:var(--orange);width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-size:.72rem;flex:0 0 auto}
+  .c-why .ico{background:#FFE6CC}.c-what .ico{background:var(--orange-soft)}.c-how .ico{background:#FFEFD6}
+  .c-int .ico{background:#E9E1FA}.c-bg .ico{background:#E2EEF8}.c-exc .ico{background:#FAD4CE}.c-req .ico{background:var(--mint-soft)}
+  .c-ops{background:linear-gradient(160deg,#fff,#f3f8ff);border-color:#d8e6f5}.c-ops .ico{background:var(--navy);color:#fff}
+  .editable{width:100%;border:1px dashed transparent;border-radius:10px;padding:8px 10px;background:#fff;font-family:var(--body);font-size:.92rem;line-height:1.65;color:var(--ink)}
+  .editable:focus{outline:none;border-color:var(--orange-soft);background:#fffaf3}
+  textarea.editable{min-height:auto;overflow:hidden}
+  .sublab{font-family:var(--round);font-weight:700;font-size:.78rem;color:var(--navy-soft);margin:10px 0 4px}
+  .c-ops textarea#o-ops-ask{background:#fff;border:1.5px solid #dbe7f4;min-height:96px}
+  .hint{font-size:.74rem;color:var(--muted);margin-left:auto;font-family:var(--round)}
+  .copybtn{font-family:var(--round);font-weight:700;font-size:.72rem;background:#fff;border:1.5px solid var(--line);color:var(--navy);padding:5px 10px;border-radius:9px;margin-left:auto}
+  .copybtn:hover{border-color:var(--mint);color:var(--mint)}.copybtn.done{background:var(--mint);color:#fff;border-color:var(--mint)}
+  .outfoot{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}.outfoot button{padding:11px 16px}
+  .privacy{background:#FFF3E0;border:1px solid #F3D199;color:#8a5a00;border-radius:12px;padding:9px 12px;font-size:.8rem;font-family:var(--round);font-weight:700;margin:8px 0 10px;line-height:1.55}
+  .btn-ghost2{background:#fff;border:1.5px solid var(--line);color:var(--navy)}
+  .btn-ghost2:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .expsub{font-family:var(--round);font-weight:800;font-size:.8rem;color:var(--navy-soft);margin:12px 0 6px;display:flex;align-items:center;gap:6px}
+  .btn-mint{background:linear-gradient(135deg,var(--mint),#159e85);color:#fff;box-shadow:0 5px 14px rgba(31,184,154,.35)}
+  .btn-navy{background:var(--navy);color:#fff}
+  .err{background:#FDECEA;border:1px solid #F5C6C2;color:#B4231A;border-radius:12px;padding:12px 14px;font-size:.88rem;margin-top:8px}
+  .loading{text-align:center;padding:34px 10px}.loading .rab{font-size:44px;display:inline-block;animation:hop 1s ease-in-out infinite}
+  .loading p{font-family:var(--round);font-weight:700;color:var(--navy-soft);margin:10px 0 0}
+  .steam{font-size:22px;letter-spacing:4px;opacity:.6;animation:fade 1.4s ease-in-out infinite}@keyframes fade{0%,100%{opacity:.25}50%{opacity:.8}}
+  footer{margin:22px auto 0;text-align:center;color:var(--muted);font-size:.78rem;line-height:1.8}footer b{color:var(--navy-soft);font-family:var(--round)}
+  .note{font-size:.78rem;color:var(--muted);margin-top:10px;font-family:var(--round)}
+  /* --- うさうさ 世界観・遊び心 --- */
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-3px) rotate(2deg)}}
+  @keyframes wob{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}}
+  @keyframes steamrise{0%{opacity:0;transform:translateY(8px) scaleX(.7)}30%{opacity:.5}100%{opacity:0;transform:translateY(-18px) scaleX(1.15)}}
+  @keyframes peek{0%,55%,100%{transform:translateY(80%)}66%,88%{transform:translateY(4%)}}
+  .logo{animation:bob 3.2s ease-in-out infinite;cursor:pointer}
+  .logo:hover{animation:wob .5s ease}
+  .steamset{position:absolute;right:52px;bottom:30px;width:54px;height:46px;pointer-events:none;z-index:0}
+  .steamset i{position:absolute;bottom:0;width:6px;height:22px;border-radius:6px;background:rgba(255,255,255,.55);filter:blur(2px);animation:steamrise 2.6s ease-in-out infinite}
+  .steamset i:nth-child(1){left:6px}
+  .steamset i:nth-child(2){left:22px;height:28px;animation-delay:.8s}
+  .steamset i:nth-child(3){left:38px;animation-delay:1.4s}
+  #output .card:nth-child(3){animation-delay:.05s}
+  #output .card:nth-child(4){animation-delay:.10s}
+  #output .card:nth-child(5){animation-delay:.15s}
+  #output .card:nth-child(6){animation-delay:.20s}
+  #output .card:nth-child(7){animation-delay:.25s}
+  #output .card:nth-child(8){animation-delay:.30s}
+  #output .card:nth-child(9){animation-delay:.35s}
+  .hello{margin-top:10px;font-family:var(--round);font-weight:700;color:var(--navy);line-height:1.6}
+  .hello span{display:block;font-weight:500;font-size:.86rem;color:var(--muted);margin-top:4px}
+  .peek{position:fixed;right:16px;bottom:0;font-size:32px;z-index:5;pointer-events:none;animation:peek 8s ease-in-out infinite;filter:drop-shadow(0 3px 5px rgba(22,48,79,.25))}
+  @media(max-width:600px){.peek{display:none}}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<style>
+/* ===== 札幌駅前・夜の屋台 × チャルメラ × 少しメルヘン ===== */
+:root{
+  --orange:#F6873A; --orange-deep:#E8453C; --orange-soft:#FFD9AE;
+  --mint:#22BFA0; --mint-soft:#C2EFE4;
+  --navy:#3a2f5b; --navy-soft:#5a4b86;
+  --ink:#2c2320; --muted:#8a7d76; --line:#efe0c6;
+  --paper:#fffdf6; --cream:#fff9f0; --gold:#F7C948;
+  --sign:'Yusei Magic','M PLUS Rounded 1c','Yu Gothic UI',sans-serif;
+}
+body{background:
+   radial-gradient(circle at 82% 6%, rgba(247,201,72,.22) 0, transparent 24%),
+   radial-gradient(circle at 18% 92%, rgba(34,191,160,.10) 0, transparent 30%),
+   linear-gradient(180deg,#2b3360 0%,#3c4a86 55%,#4a5a9c 100%) fixed;}
+.wrap{position:relative;z-index:1}
+.snow{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.7;
+  background-image:
+   radial-gradient(2px 2px at 20px 30px,#fff,transparent),
+   radial-gradient(2px 2px at 120px 90px,rgba(255,255,255,.85),transparent),
+   radial-gradient(1.5px 1.5px at 210px 160px,#fff,transparent),
+   radial-gradient(2px 2px at 300px 60px,rgba(255,255,255,.7),transparent),
+   radial-gradient(1.5px 1.5px at 260px 240px,rgba(255,255,255,.8),transparent);
+  background-size:320px 320px;animation:snowfall 16s linear infinite;opacity:.6}
+@keyframes snowfall{from{background-position:0 0}to{background-position:0 320px}}
+
+/* 屋台ヘッダー */
+header.brand{background:linear-gradient(180deg,#4d3c72,#34294f 72%);border:2px solid rgba(247,201,72,.30);box-shadow:0 14px 32px rgba(20,16,40,.32)}
+header.brand::after{display:none}
+header.brand h1{font-family:var(--sign);letter-spacing:.02em}
+.noren{position:relative;margin:-20px -24px 16px;padding:11px 0 15px;border-radius:20px 20px 0 0;
+  background:repeating-linear-gradient(90deg,#df5e50 0 2px,#EE7163 2px 33.33%);
+  color:#fff;text-align:center;font-family:var(--sign);font-size:1.06rem;letter-spacing:.2em;
+  text-shadow:0 1px 0 rgba(0,0,0,.25);box-shadow:inset 0 -7px 12px rgba(0,0,0,.18)}
+.noren::after{content:"";position:absolute;left:0;right:0;bottom:-9px;height:12px;background:#EE7163;
+  -webkit-mask:radial-gradient(11px 12px at 11px -3px,transparent 98%,#000) repeat-x;
+  mask:radial-gradient(11px 12px at 11px -3px,transparent 98%,#000) repeat-x;
+  -webkit-mask-size:22px 12px;mask-size:22px 12px}
+.lantern{position:absolute;top:72px;right:16px;width:40px;height:52px;border-radius:50%/46%;pointer-events:none;z-index:1;
+  background:radial-gradient(circle at 50% 35%,#ffd6a6,#EE7163 72%);
+  box-shadow:0 0 22px 7px rgba(255,138,76,.5);display:grid;place-items:center;color:#5a1410;
+  transform-origin:top center;animation:swing 3.6s ease-in-out infinite}
+.lantern b{font-family:var(--sign);font-size:1.05rem}
+.lantern::before{content:"";position:absolute;top:-7px;width:16px;height:7px;background:#2f2620;border-radius:3px}
+.lantern::after{content:"";position:absolute;bottom:-6px;width:12px;height:6px;background:var(--gold);border-radius:2px}
+@keyframes swing{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+.charumera{position:absolute;top:66px;right:60px;color:var(--gold);font-size:.95rem;pointer-events:none;z-index:1}
+.charumera i{position:absolute;opacity:0;animation:note 3.4s ease-in-out infinite}
+.charumera i:nth-child(2){left:13px;top:-7px;animation-delay:1.1s}
+.charumera i:nth-child(3){left:25px;top:3px;animation-delay:2.2s}
+@keyframes note{0%{opacity:0;transform:translateY(0) rotate(-6deg)}25%{opacity:1}100%{opacity:0;transform:translateY(-26px) rotate(16deg)}}
+
+/* 和紙の品書きパネル */
+.panel{background:#fffdf6;border:2px solid #efe0c6;box-shadow:0 12px 30px rgba(15,15,35,.30)}
+.method{background:#fffaf0;border:2px solid #efe0c6;box-shadow:0 10px 26px rgba(15,15,35,.26)}
+.help{margin:0 0 18px;background:#fffdf6;border:2px solid #efe0c6;border-radius:16px;box-shadow:0 8px 22px rgba(15,15,35,.22);overflow:hidden}
+.help summary{cursor:pointer;list-style:none;padding:13px 18px;font-family:var(--round);font-weight:800;color:var(--navy);font-size:.95rem}
+.help summary::-webkit-details-marker{display:none}
+.help summary::after{content:"＋";float:right;color:var(--orange-deep);font-weight:800}
+.help[open] summary::after{content:"−"}
+.helpbody{padding:2px 20px 16px;font-size:.9rem;line-height:1.75;color:var(--ink)}
+.helpbody h3{font-family:var(--round);font-weight:800;color:var(--orange-deep);font-size:.92rem;margin:12px 0 4px;border-left:4px solid var(--orange-deep);padding-left:8px}
+.helpbody ol,.helpbody ul{margin:4px 0 0;padding-left:1.3em}
+.helpbody li{margin:3px 0}
+body.corp .help{background:#fff;border-color:#dde5ec;box-shadow:0 2px 12px rgba(20,40,70,.08)}
+body.corp .help summary{color:#0f2f4b}
+body.corp .help summary::after{color:#15705c}
+body.corp .helpbody h3{color:#15705c;border-left-color:#22BFA0}
+.card{background:#fffdf6;border:1.5px dashed #e7cfa6}
+.c-ops{background:linear-gradient(160deg,#fffdf6,#eef7f1);border-color:#cdeadd}
+.c-cas .ico{background:#FFE1B0}.c-iso .ico{background:#D9E8F2}
+
+/* ボタン */
+.btn-main{background:linear-gradient(135deg,#F89A55,#EE7163);box-shadow:0 6px 16px rgba(238,113,99,.38)}
+.btn-main:hover{box-shadow:0 9px 22px rgba(238,113,99,.48)}
+.btn-navy{background:linear-gradient(135deg,#7a4a2b,#523219)}
+.btn-mint{background:linear-gradient(135deg,#22BFA0,#15917a)}
+.btn-ghost,.btn-ghost2{background:#fffaf0;border:1.6px solid #e7cfa6;color:var(--navy)}
+
+/* ヘッダー切替＝木札 */
+.htab{border:2px solid rgba(255,255,255,.3);background:rgba(255,255,255,.10)}
+.htab[data-tone="ramen"].active{background:linear-gradient(135deg,#F89A55,#EE7163);border-color:#EE7163;box-shadow:0 5px 14px rgba(238,113,99,.45)}
+.htab[data-tone="serious"].active{background:linear-gradient(135deg,#22BFA0,#15917a);border-color:#22BFA0;box-shadow:0 5px 14px rgba(34,191,160,.5)}
+
+/* ステップ番号＝ミニ提灯 */
+.card .step{background:#EE7163;border-radius:50%/46%;box-shadow:0 0 0 2px #fff,0 0 8px rgba(255,160,110,.45)}
+#output.mode-serious .card .step{background:#22BFA0;box-shadow:0 0 0 2px #fff,0 0 8px rgba(34,191,160,.45)}
+
+/* 小物 */
+.tonebadge.ramen{background:#FFE6CC;color:#b8401f}
+.tonebadge.serious{background:#C2EFE4;color:#0a563f}
+.verpill{background:rgba(247,201,72,.22)}
+.propill{font-family:var(--round);font-weight:800;font-size:.7rem;letter-spacing:.1em;background:linear-gradient(135deg,#F7C948,#e0a93a);color:#3a2a08;padding:3px 9px;border-radius:999px;margin-left:8px;box-shadow:0 2px 8px rgba(247,201,72,.4)}
+.opt{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:2px 0 6px}
+.optlab{font-family:var(--round);font-weight:800;font-size:.82rem;color:var(--navy-soft)}
+.optradio{font-family:var(--round);font-weight:700;font-size:.85rem;color:var(--ink);display:flex;align-items:center;gap:5px;cursor:pointer}
+.optradio input{accent-color:#EE7163;width:16px;height:16px}
+.opthint{font-size:.74rem;color:var(--muted);font-family:var(--round);margin-bottom:8px;line-height:1.55}
+textarea::placeholder,input::placeholder{color:#bcae9b;opacity:1;font-style:italic}
+.apibox{border:1.5px dashed var(--line);border-radius:12px;padding:12px 14px;margin:0 0 10px;background:rgba(255,255,255,.55)}
+body.corp textarea::placeholder,body.corp input::placeholder{color:#9aa7b3}
+body.corp .apibox{background:#f7fafc;border-color:#dbe5ee}
+.hello{color:#5a3b1a}
+footer{color:#e3e8f5}footer b{color:#fff}
+textarea:focus,input:focus,select:focus{box-shadow:0 0 0 3px rgba(246,135,58,.18)}
+@media(max-width:600px){.lantern,.charumera{display:none}}
+
+/* ===== ②法人：真面目な法人研修デザイン（タブ選択で全体が切替） ===== */
+body.corp{background:linear-gradient(180deg,#f3f6fa 0%,#e9eef4 100%) fixed;color:#1f2a37}
+body.corp .snow,body.corp .lantern,body.corp .charumera,body.corp .steamset,body.corp .noren,body.corp .peek{display:none!important}
+body.corp header.brand{background:linear-gradient(135deg,#0f2f4b 0%,#15705c 100%);border:none;border-radius:16px;box-shadow:0 8px 24px rgba(15,47,75,.28);padding:22px 26px}
+body.corp header.brand h1{font-family:var(--round);letter-spacing:0}
+body.corp .kobo{letter-spacing:.16em}
+body.corp .tagline{border-left-color:#36c9a8}
+body.corp .verpill{background:rgba(255,255,255,.18)}
+body.corp .optradio input{accent-color:#15705c}
+body.corp .logo{animation:none;background:linear-gradient(135deg,#15705c,#0f5a49)}
+body.corp .method{background:#fff;border:1px solid #dde5ec;border-radius:14px;box-shadow:0 2px 10px rgba(20,40,70,.07)}
+body.corp .method .big{color:#0f2f4b}body.corp .method .big b{color:#15705c}
+body.corp .panel{background:#fff;border:1px solid #dde5ec;border-radius:14px;box-shadow:0 2px 12px rgba(20,40,70,.08)}
+body.corp .panel h2{color:#0f2f4b}
+body.corp .card{background:#fff;border:1px solid #e3e9ef;border-radius:10px;box-shadow:none}
+body.corp .c-ops{background:#f5fbf9;border-color:#cfe8e0}
+body.corp .card .tt{color:#0f2f4b}
+body.corp .card .step{background:#15705c;border-radius:7px;box-shadow:none;color:#fff}
+body.corp .card .ico{background:#e7eef4}
+body.corp .btn-main{background:linear-gradient(135deg,#15705c,#0f5a49);box-shadow:0 4px 14px rgba(21,112,92,.32)}
+body.corp .btn-main:hover{box-shadow:0 7px 18px rgba(21,112,92,.42)}
+body.corp .btn-navy{background:#33485e}
+body.corp .btn-mint{background:#15705c}
+body.corp .btn-ghost,body.corp .btn-ghost2{background:#fff;border:1.5px solid #cfd8e1;color:#0f2f4b}
+body.corp .htab{border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.12)}
+body.corp .tonebadge.serious{background:#e3f3ee;color:#0c4f3e;border:1px solid #bfe3d8}
+body.corp .hello{color:#0f2f4b}
+body.corp footer{color:#5a6b7c}body.corp footer b{color:#0f2f4b}
+body.corp textarea:focus,body.corp input:focus,body.corp select:focus,body.corp .editable:focus{border-color:#36c9a8;box-shadow:0 0 0 3px rgba(54,201,168,.18)}
+</style>
+</head>
+<body>
+<div class="snow" aria-hidden="true"></div>
+<div class="wrap">
+
+  <header class="brand">
+    <div class="noren" aria-hidden="true">🍜 うさうさ屋台 🐰</div>
+    <div class="lantern" aria-hidden="true"><b>兎</b></div>
+    <div class="charumera" aria-hidden="true"><i>♪</i><i>♪</i><i>♬</i></div>
+    <div class="steamset" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="brandrow">
+      <div class="logo">🐰</div>
+      <div class="brandtext">
+        <div class="kobo">🛠 うさうさ研修工房</div>
+        <h1>聞きに行くスタンス × 要件詰めジェネレーター</h1>
+        <div class="sub">ふんわりした点を、現役エンジニアの粒度で Why→What→How まで詰める</div>
+      </div>
+      <span class="verpill">v3.8.0</span><span class="propill">PRO</span>
+    </div>
+    <div class="tagline">面白きこともなき世を面白く ── 曖昧な指示は、現役エンジニアが要件を詰めるように分解してから確認に行く。</div>
+    <div class="headtabs" role="group" aria-label="版の選択">
+      <button class="htab active" data-tone="ramen" aria-pressed="true"><span class="em">🍜</span> ①ラーメン屋編</button>
+      <button class="htab" data-tone="serious" aria-pressed="false"><span class="em">🏫</span> ②法人・研修スクール</button>
+    </div>
+  </header>
+
+  <div class="method">
+    <div class="big"><b>「ふんわり」は、要件にしてから持っていく。</b>Why／What／How・意図・背景前提・例外・要件・運用まで自分で詰め、メイン講師は判定するだけにする。</div>
+    <div class="sm">サブ講師は独断で動かない（責任はメイン講師）。詰める＝決めることではなく、認識を100%合わせること。確認は「この理解で進めます／相違あれば一言」の否定なければ進む型。新卒研修では自走を止めない・恥をかかせない配慮も込みで。</div>
+  </div>
+
+  <details class="help">
+    <summary>📖 使い方・セキュリティ</summary>
+    <div class="helpbody">
+      <h3>使い方</h3>
+      <ol>
+        <li>左に「ふんわりした指摘・聞きたいこと・状況」を入力。</li>
+        <li>AI生成モードを選ぶ：<b>使わない</b>（手動・オフライン／既定）・<b>使う（自動）</b>（このClaude上）・<b>使う（自前キー）</b>（社内Claude API／プロキシ）。</li>
+        <li>生成ボタンで①ラーメン屋編・②法人の両方が用意され、ヘッダーのボタンで即切替。手動モードは各カードの薄いガイドに沿って記入。</li>
+        <li>各カードは編集可。コピー（Notion用Markdown／Slack相談たたき台）やダウンロード（.md／PDF／CSV）で持ち出し。</li>
+      </ol>
+      <h3>セキュリティ</h3>
+      <ul>
+        <li><b>使わない（既定）＝完全オフライン</b>：入力も出力もブラウザ内だけで完結し、外部送信は一切なし。配布・社外共有でも安全。</li>
+        <li><b>使う（自動）</b>：このClaudeプレビュー上でのみAIが動作します。</li>
+        <li><b>使う（自前キー）</b>：APIキーは<b>ブラウザのメモリ内のみ</b>で保持し保存しません（localStorage等は不使用）。指定したエンドポイントにのみ送信。社内プロキシ経由を推奨（CORS・認証・ログはプロキシ側で管理）。</li>
+        <li><b>個人情報</b>：実名・社名・連絡先は書かず役割名（メイン講師／サブ講師／受講生）で。書き出し時にメール・社名・電話番号らしき表記を自動チェックし、確認を挟みます。</li>
+        <li><b>配布</b>：このHTMLにAPIキーは埋め込まれません（毎回入力）。共有・公開しても鍵は残りません。</li>
+      </ul>
+    </div>
+  </details>
+
+  <div class="grid">
+    <!-- INPUT -->
+    <section class="panel">
+      <h2><span class="dot"></span>状況を入力</h2>
+      <label class="field">
+        <span class="lab">ふんわりした指摘・聞きたいこと・状況 <span class="req">必須</span></span>
+        <textarea id="in-text" placeholder="例）Day2の環境構築演習で受講生がつまずいている。メイン講師の方針に合わせたいが、どこまで個別に手を貸してよいかの指示がふんわりしている。"></textarea>
+      </label>
+      <div class="row2">
+        <label class="field"><span class="lab">相手（呼称・ロール）</span><input type="text" id="in-who" value="メイン講師"></label>
+        <label class="field"><span class="lab">聞くタイミング</span>
+          <select id="in-time">
+            <option>講義の合間・休憩</option><option>朝の打ち合わせ</option><option>終業後・1on1</option>
+            <option selected>Slack・チャット</option><option>演習中（緊急）</option>
+          </select>
+        </label>
+      </div>
+      <label class="field"><span class="lab">研修の場面（任意）</span>
+        <input type="text" id="in-scene" value="法人新卒研修" placeholder="例）法人新卒研修・Linux基礎 Day2 演習"></label>
+      <div class="opt">
+        <span class="optlab">⚙️ AI生成</span>
+        <label class="optradio"><input type="radio" name="aimode" value="off" checked> 使わない（手動・オフライン）</label>
+        <label class="optradio"><input type="radio" name="aimode" value="on"> 使う（自動／Claude上）</label>
+        <label class="optradio"><input type="radio" name="aimode" value="key"> 使う（自前キー）</label>
+      </div>
+      <div class="opthint" id="opthint">※ 既定は「使わない」。通信せずブラウザ内だけで動きます（配布・オフライン・個人情報も外に出ません）。「使う（自動）」はこのClaude上のプレビューでのみAIが下書きを生成します。</div>
+      <div class="apibox" id="apibox" style="display:none">
+        <label class="field"><span class="lab">APIキー（自前）</span><input type="password" id="api-key" placeholder="sk-ant-… または社内発行キー" autocomplete="off"></label>
+        <div class="row2">
+          <label class="field"><span class="lab">エンドポイント／社内プロキシURL</span><input type="text" id="api-endpoint" value="https://api.anthropic.com/v1/messages"></label>
+          <label class="field"><span class="lab">モデル</span><input type="text" id="api-model" value="claude-sonnet-4-20250514"></label>
+        </div>
+        <div class="opthint">🔑 キーはブラウザのメモリ内のみ（保存しません）。指定したエンドポイントにのみ送信されます。社内プロキシ利用時はURLを差し替えてください。api.anthropic.com への直アクセス時はブラウザ用ヘッダーを付与します（プロキシ側でCORS／認証を処理する構成を推奨）。</div>
+      </div>
+      <div class="btns">
+        <button class="btn-main" id="go">📝 手入力テンプレを開く</button>
+        <button class="btn-ghost" id="sample">サンプル投入</button>
+      </div>
+      <div id="err-slot"></div>
+      <div class="note">※ 生成時にラーメン屋編・法人の両版をまとめて作成。タブはクリックで即切替。結果は編集可で、切替後も保持。実名・社名は出さず役割名で。</div>
+    </section>
+
+    <!-- OUTPUT -->
+    <section class="panel">
+      <h2><span class="dot" style="background:var(--mint)"></span>アウトプット</h2>
+
+      <div class="empty" id="empty">
+        <span class="rab">🐰</span>
+        <div class="hello">🍜 いらっしゃいませ！<span>「ご注文（＝ふんわりした状況）」を左に書いて、生成ボタンを押してください。</span></div>
+      </div>
+
+      <div class="loading" id="loading" style="display:none">
+        <span class="rab">🐰</span><div class="steam">≋ ≋ ≋</div><p id="loadmsg">要件に詰めています…</p>
+      </div>
+
+      <div id="output">
+        <div class="tonebadge ramen" id="tonebadge">🍜 たとえで覚える版：うさうさラーメン店のオペレーションになぞらえて記憶。</div>
+
+        <div class="card c-why"><div class="ch"><div class="step">1</div><div class="tt">Why（なぜ）</div><button class="copybtn" data-copy="o-why">コピー</button></div><textarea class="editable auto" id="o-why"></textarea></div>
+        <div class="card c-what"><div class="ch"><div class="step">2</div><div class="tt">What（何を）</div><button class="copybtn" data-copy="o-what">コピー</button></div><textarea class="editable auto" id="o-what"></textarea></div>
+        <div class="card c-how"><div class="ch"><div class="step">3</div><div class="tt">How（どうやって）</div><span class="hint">1行=1手順</span><button class="copybtn" data-copy="o-how">コピー</button></div><textarea class="editable auto" id="o-how"></textarea></div>
+        <div class="card c-int"><div class="ch"><div class="ico">🧠</div><div class="tt">意図（メイン講師の狙い）</div><button class="copybtn" data-copy="o-int">コピー</button></div><textarea class="editable auto" id="o-int"></textarea></div>
+        <div class="card c-bg"><div class="ch"><div class="ico">🗺</div><div class="tt">背景・前提</div><button class="copybtn" data-copy="o-bg">コピー</button></div><textarea class="editable auto" id="o-bg"></textarea></div>
+        <div class="card c-exc"><div class="ch"><div class="ico">⚠️</div><div class="tt">例外（止めて一言確認するケース）</div><button class="copybtn" data-copy="o-exc">コピー</button></div><textarea class="editable auto" id="o-exc"></textarea></div>
+        <div class="card c-req"><div class="ch"><div class="ico">📋</div><div class="tt">要件（満たすべき条件／完了の定義）</div><button class="copybtn" data-copy="o-req">コピー</button></div><textarea class="editable auto" id="o-req"></textarea></div>
+        <div class="card c-ops"><div class="ch"><div class="ico">🔄</div><div class="tt">運用（回し方＆聞き方の一次案）</div><button class="copybtn" data-copy="__ops">コピー</button></div>
+          <div class="sublab">運用フロー（1行=1ステップ）</div>
+          <textarea class="editable auto" id="o-ops-flow"></textarea>
+          <div class="sublab">聞き方の一次案（否定なければ進む型）</div>
+          <textarea class="editable" id="o-ops-ask"></textarea>
+        </div>
+
+        <div class="card c-cas" id="card-casual">
+          <div class="ch"><div class="ico">💬</div><div class="tt">雑談・軽い指摘 対応</div><button class="copybtn" data-copy="__cas">コピー</button></div>
+          <div class="sublab">これは“軽い案件”？の見極め</div>
+          <textarea class="editable auto" id="o-cas-check"></textarea>
+          <div class="sublab">軽くさばくコツ（1行=1つ）</div>
+          <textarea class="editable auto" id="o-cas-howto"></textarea>
+          <div class="sublab">そのまま返せる一言</div>
+          <textarea class="editable" id="o-cas-reply"></textarea>
+        </div>
+        <div class="card c-iso" id="card-iso" style="display:none">
+          <div class="ch"><div class="ico">📐</div><div class="tt">ISO形式（標準化された手順書）</div><button class="copybtn" data-copy="__iso">コピー</button></div>
+          <div class="sublab">1. 目的</div><textarea class="editable auto" id="o-iso-purpose"></textarea>
+          <div class="sublab">2. 適用範囲</div><textarea class="editable auto" id="o-iso-scope"></textarea>
+          <div class="sublab">3. 責任・権限</div><textarea class="editable auto" id="o-iso-resp"></textarea>
+          <div class="sublab">4. 手順（1行=1ステップ）</div><textarea class="editable auto" id="o-iso-proc"></textarea>
+          <div class="sublab">5. 記録・エビデンス（1行=1つ）</div><textarea class="editable auto" id="o-iso-rec"></textarea>
+        </div>
+
+        <div class="privacy">⚠️ 個人情報に留意：実名・社名・連絡先は記載せず、役割名（メイン講師／サブ講師／受講生）で。書き出し時にメール・社名・電話番号らしき表記を自動チェックします。</div>
+        <div class="expsub">📋 コピー</div>
+        <div class="outfoot">
+          <button class="btn-mint" id="copy-md">Notion用Markdown</button>
+          <button class="btn-ghost2" id="copy-slack">💬 Slack相談たたき台</button>
+        </div>
+        <div class="expsub">📥 ダウンロード</div>
+        <div class="outfoot">
+          <button class="btn-navy" id="dl-md">📝 Notionメモ .md</button>
+          <button class="btn-navy" id="dl-pdf">📄 PDF</button>
+          <button class="btn-navy" id="dl-csv">📊 CSV</button>
+          <button class="btn-ghost2" id="dl-slack">💬 Slackたたき台 .txt</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <b>WHY→WHAT→HOW</b>＋意図・背景前提・例外・要件・運用。&nbsp;|&nbsp; ボタンで切替：①🍜 ラーメン屋編（オレンジ）⇄ ②🏫 法人・研修スクール（グリーン）<br>
+    🐰 うさうさ研修工房 — 文系からのインフラ講師道、面白きこともなき世を面白く。<br>
+    <span style="opacity:.72;font-size:.72rem">v3.8.0 Pro stable ・ build 2026-06-03 ・ QA✓ E2E68 / Robustness11</span>
+  </footer>
+  <div class="peek" aria-hidden="true">🐰</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let cache={serious:null,ramen:null}, tone='ramen';
+const LIST=['how','bg','exc','req','opsflow'];
+
+function grow(el){el.style.height='auto';el.style.height=(el.scrollHeight+2)+'px';}
+document.addEventListener('input',e=>{if(e.target.classList&&e.target.classList.contains('auto'))grow(e.target);});
+
+$('sample').addEventListener('click',()=>{
+  $('in-text').value="Day2のLinux環境構築演習で複数の受講生が同じ箇所でつまずいている。メイン講師の進め方に合わせたいが、どこまで個別に手を貸してよいか（答えを出すのか／ヒントに留めるのか）の指示がふんわりしている。休憩時間に方針をそろえたい。";
+  $('in-who').value="メイン講師"; $('in-time').value="講義の合間・休憩";
+  $('in-scene').value="法人新卒研修・Linux基礎 Day2 演習";
+});
+
+function showErr(m){$('err-slot').innerHTML='<div class="err">'+m+'</div>';}
+function clearErr(){$('err-slot').innerHTML='';}
+function lines(a){return (a||[]).map(s=>'・'+s).join('\n');}
+function unlines(v){return (v||'').split('\n').map(s=>s.replace(/^[・\-\u2022\s]+/,'').trim()).filter(Boolean);}
+
+function sysFor(t){
+  const base=[
+"あなたはIT法人研修（新卒研修）の「サブ講師」を支援するアシスタントです。",
+"サブ講師が受け取った“ふんわりした指摘・状況”を、メイン講師に聞きに行く前に自分で要件まで詰め、認識合致を100%にするための材料を作ります。",
+"鉄則：(1)曖昧さはサブ講師側で吸収し一次案にする（丸投げしない）。(2)サブ講師は独断で動かない＝『詰める』は決めることではなく認識を合わせること。責任はメイン講師。(3)確認はクローズドで『この理解で進めます／相違あれば一言』の否定なければ進む型。(4)タイミング配慮（講義を中断させない）。(5)上司好み＝結論ファースト・前置きなし・簡潔・事実/数値。",
+"新卒研修の文脈：受講生は社会人歴ゼロで自走の型づくりが目的。答えを与えすぎない／恥をかかせない／心理的安全性、をスタンスに反映。"
+  ];
+  const toneBlock = t==='serious'
+    ? "トーン＝現役エンジニアの粒度。曖昧な要件を一流エンジニアが詰めるように、具体・技術的・観察可能に書く。requirementsは『完了の定義／受け入れ条件』レベルまで。前提・仮定は明示。exceptionsはエッジケースを洗い出すが、サブ講師は独断で動かず『止めて一言確認』の形にする。法人新卒研修にふさわしい丁寧でプロ仕様の日本語。加えて、ISO（品質マネジメント文書）形式の手順書セクション(iso)も作る：目的／適用範囲／責任・権限／手順／記録・エビデンスの標準フォーマットで、研修運用手順書として通用する粒度にする。"
+    : "トーン＝うさうさラーメン店のたとえを使った、覚えやすく親しみやすい教え方（うさうさ先生の語り口）。各項目を店のオペレーション（仕込み・注文・提供など）にたとえて短く。要点は同じだが、覚え方として機能させる。加えて、雑談や軽い指摘（その場で軽く返せばよい低重要度の話）への対応セクション(casual)も作る：重い要件詰めはせず、軽い案件かの見極めと、そのまま返せる軽い一言を示す。";
+  const extraKey = t==='serious'
+    ? ',"iso":{"purpose":"目的(1〜2文)","scope":"適用範囲(1文)","responsibility":"責任・権限（メイン講師／サブ講師の分担）","procedure":["手順ステップ3〜5"],"records":["残す記録・エビデンス2〜3"]}'
+    : ',"casual":{"check":"雑談・軽い指摘か（深掘り不要か）の見極め1文","howto":["軽くさばくコツ2〜3"],"reply":"そのまま返せる軽い一言"}';
+  const schema='出力は次のキーを持つJSONのみ。前置き・後置き・コードフェンス・説明文を一切付けない。日本語。各リストは2〜5個、簡潔に。\n'+
+'{"why":"なぜこの指摘/状況が生まれたか(2〜3文)","what":"結局なにを満たせばよいか(1〜2文)","how":["どう進めるか手順を観察可能に"],"intent":"メイン講師の狙い・意図(1〜2文)","background":["前提・制約・暗黙の了解"],"exceptions":["独断で動かず止めて一言確認すべき例外 → 確認の形"],"requirements":["満たすべき条件・完了の定義(受け入れ条件)"],"ops":{"flow":["運用の回し方をステップで"],"ask":"メイン講師への聞き方の一次案。前置きなし・結論ファースト・否定なければ進む型のセリフ。"}'+extraKey+'}';
+  return base.join("\n")+"\n"+toneBlock+"\n"+schema;
+}
+function buildUserMsg(){
+  return `# ふんわりした指摘・状況\n${$('in-text').value.trim()}\n\n# 相手\n${$('in-who').value.trim()||'メイン講師'}\n# 聞くタイミング\n${$('in-time').value}\n# 研修の場面\n${$('in-scene').value.trim()||'法人新卒研修'}`;
+}
+function parseJSON(raw){let t=(raw||'').trim().replace(/```json/gi,'').replace(/```/g,'').trim();const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a>=0&&b>a)t=t.slice(a,b+1);return JSON.parse(t);}
+
+function saveCurrent(){
+  if(!cache[tone])return;
+  const g=cache[tone];
+  g.why=$('o-why').value.trim(); g.what=$('o-what').value.trim();
+  g.how=unlines($('o-how').value); g.intent=$('o-int').value.trim();
+  g.background=unlines($('o-bg').value); g.exceptions=unlines($('o-exc').value);
+  g.requirements=unlines($('o-req').value);
+  g.ops={flow:unlines($('o-ops-flow').value),ask:$('o-ops-ask').value.trim()};
+  if(tone==='ramen'){
+    g.casual={check:$('o-cas-check').value.trim(),howto:unlines($('o-cas-howto').value),reply:$('o-cas-reply').value.trim()};
+  }else{
+    g.iso={purpose:$('o-iso-purpose').value.trim(),scope:$('o-iso-scope').value.trim(),responsibility:$('o-iso-resp').value.trim(),procedure:unlines($('o-iso-proc').value),records:unlines($('o-iso-rec').value)};
+  }
+}
+function render(){
+  const g=cache[tone];if(!g)return;
+  $('o-why').value=g.why||''; $('o-what').value=g.what||'';
+  $('o-how').value=lines(g.how); $('o-int').value=g.intent||'';
+  $('o-bg').value=lines(g.background); $('o-exc').value=lines(g.exceptions);
+  $('o-req').value=lines(g.requirements);
+  $('o-ops-flow').value=lines(g.ops&&g.ops.flow); $('o-ops-ask').value=(g.ops&&g.ops.ask)||'';
+  // tone-specific section
+  const casCard=$('card-casual'), isoCard=$('card-iso');
+  if(tone==='ramen'){
+    casCard.style.display=''; isoCard.style.display='none';
+    const c=g.casual||{}; $('o-cas-check').value=c.check||''; $('o-cas-howto').value=lines(c.howto); $('o-cas-reply').value=c.reply||'';
+  }else{
+    casCard.style.display='none'; isoCard.style.display='';
+    const o=g.iso||{}; $('o-iso-purpose').value=o.purpose||''; $('o-iso-scope').value=o.scope||''; $('o-iso-resp').value=o.responsibility||''; $('o-iso-proc').value=lines(o.procedure); $('o-iso-rec').value=lines(o.records);
+  }
+  const tb=$('tonebadge');
+  if(tone==='serious'){tb.className='tonebadge serious';tb.textContent='🏫 法人・研修スクール（現役エンジニア粒度）：要件＝完了の定義まで、前提と例外を明示。';}
+  else{tb.className='tonebadge ramen';tb.textContent='🍜 たとえで覚える版：うさうさラーメン店のオペレーションになぞらえて記憶。';}
+  document.querySelectorAll('#output textarea.auto').forEach(grow);
+}
+
+let busy=false;
+async function callModel(systemStr){
+  const mode=aiMode();
+  const model = (mode==='key' ? ($('api-model').value.trim()||'claude-sonnet-4-20250514') : 'claude-sonnet-4-20250514');
+  const body=JSON.stringify({model,max_tokens:2000,system:systemStr,messages:[{role:'user',content:buildUserMsg()}]});
+  let url,headers;
+  if(mode==='key'){
+    url=$('api-endpoint').value.trim()||'https://api.anthropic.com/v1/messages';
+    headers={'content-type':'application/json','x-api-key':$('api-key').value.trim(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};
+  }else{
+    url='https://api.anthropic.com/v1/messages'; headers={'Content-Type':'application/json'};
+  }
+  const res=await fetch(url,{method:'POST',headers,body});
+  if(!res.ok)throw new Error('APIエラー (HTTP '+res.status+')');
+  const data=await res.json();
+  return (data.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('\n');
+}
+async function genTone(t){
+  const out=await callModel(sysFor(t));
+  const g=parseJSON(out); g.ops=g.ops||{flow:[],ask:''}; g.casual=g.casual||{}; g.iso=g.iso||{}; cache[t]=g;
+}
+function setLoading(on){$('loading').style.display=on?'block':'none';}
+function loaderTick(){const m=['状況を整理しています…','ラーメン屋編と法人（現役エンジニア粒度）を同時生成中…','例外と運用を組み立て中…'];let i=0;$('loadmsg').textContent=m[0];return setInterval(()=>{i=(i+1)%m.length;$('loadmsg').textContent=m[i];},1400);}
+function syncTabUI(){document.querySelectorAll('.htab').forEach(t=>{const on=t.dataset.tone===tone;t.classList.toggle('active',on);t.setAttribute('aria-pressed',on);});const o=$('output');o.classList.toggle('mode-serious',tone==='serious');o.classList.toggle('mode-ramen',tone==='ramen');document.body.classList.toggle('corp',tone==='serious');}
+
+function aiMode(){const r=document.querySelector('input[name=aimode]:checked');return r?r.value:'off';}
+function blankTemplate(){return {why:'',what:'',how:[],intent:'',background:[],exceptions:[],requirements:[],ops:{flow:[],ask:''},casual:{check:'',howto:[],reply:''},iso:{purpose:'',scope:'',responsibility:'',procedure:[],records:[]}};}
+function refreshMode(){const m=aiMode();$('go').textContent=m==='on'?'✨ AIで生成':m==='key'?'🔑 自前キーで生成':'📝 手入力テンプレを開く';$('apibox').style.display=m==='key'?'block':'none';}
+document.querySelectorAll('input[name=aimode]').forEach(r=>r.addEventListener('change',refreshMode));
+
+async function generate(){
+  const text=$('in-text').value.trim();clearErr();
+  if(!text){showErr('ふんわりした指摘・状況を入力してください。🐰');return;}
+  if(busy)return;
+  const mode=aiMode();
+  if(mode==='off'){
+    // 使わない（手動・オフライン）：通信せず空のテンプレ（記入ガイド付き）を開く
+    cache.ramen=blankTemplate(); cache.serious=blankTemplate();
+    $('empty').style.display='none'; $('output').style.display='block'; render();
+    return;
+  }
+  if(mode==='key' && !$('api-key').value.trim()){ showErr('自前キーモードです。APIキーを入力してください。🔑'); return; }
+  busy=true;$('go').disabled=true;
+  cache={serious:null,ramen:null};
+  $('empty').style.display='none';$('output').style.display='none';setLoading(true);
+  const tick=loaderTick();
+  try{
+    // 両版をまとめて生成 → タブはクリックで即切替できる
+    await Promise.allSettled([genTone('ramen'), genTone('serious')]);
+    if(cache.ramen||cache.serious){
+      if(!cache[tone]) tone = cache.ramen ? 'ramen' : 'serious';
+      syncTabUI(); $('output').style.display='block'; render();
+      if(!cache.ramen||!cache.serious) showErr('片方の版の生成に失敗しました。該当タブをクリックすると再生成します。');
+    }else{
+      showErr('生成に失敗しました。状況を少し具体的にすると安定します。'); $('empty').style.display='block';
+    }
+  }
+  catch(e){ showErr("生成に失敗しました："+e.message); $('empty').style.display='block'; }
+  finally{ clearInterval(tick);setLoading(false);$('go').disabled=false;busy=false; }
+}
+$('go').addEventListener('click',generate);
+const PLACEHOLDERS={
+ 'o-why':'なぜこの指摘・状況が生まれたか（背景・きっかけ）',
+ 'o-what':'結局、何を満たせばよいか（一言で）',
+ 'o-how':'・進め方の手順を1行ずつ（観察可能な行動で）',
+ 'o-int':'メイン講師の狙い・意図',
+ 'o-bg':'・前提／制約／暗黙の了解 を1行ずつ',
+ 'o-exc':'・独断で動かず“止めて一言確認”すべき例外 → 確認の形',
+ 'o-req':'・満たすべき条件／完了の定義（受け入れ条件）を1行ずつ',
+ 'o-ops-flow':'・運用の回し方を1行ずつ（誰が・いつ・何を）',
+ 'o-ops-ask':'メイン講師への一次案。「この理解で進めます／相違あれば一言」の否定なければ進む型で。',
+ 'o-cas-check':'これは雑談・軽い指摘？（深掘り不要かの見極めを1文で）',
+ 'o-cas-howto':'・軽くさばくコツを1行ずつ',
+ 'o-cas-reply':'そのまま返せる軽い一言',
+ 'o-iso-purpose':'この手順の目的',
+ 'o-iso-scope':'適用範囲（どの研修・どの場面か）',
+ 'o-iso-resp':'責任・権限（メイン講師／サブ講師の分担）',
+ 'o-iso-proc':'・手順を1ステップずつ',
+ 'o-iso-rec':'・残す記録・エビデンスを1行ずつ'
+};
+Object.keys(PLACEHOLDERS).forEach(id=>{const el=$(id); if(el) el.placeholder=PLACEHOLDERS[id];});
+refreshMode();
+$('in-text').addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter')generate();});
+
+document.querySelectorAll('.htab').forEach(tb=>tb.addEventListener('click',async()=>{
+  const nt=tb.dataset.tone; if(busy||nt===tone)return;
+  saveCurrent();
+  tone=nt; syncTabUI();
+  if(cache[tone]){render();return;}            // 生成済み → クリックで即切替
+  if(!$('in-text').value.trim()){return;}        // フォールバック：未生成なら生成
+  busy=true;$('output').style.display='none';setLoading(true);const tick=loaderTick();
+  try{ await genTone(tone);$('output').style.display='block';render(); }
+  catch(e){ showErr("この版の生成に失敗しました："+e.message); $('output').style.display='block'; }
+  finally{ clearInterval(tick);setLoading(false);busy=false; }
+}));
+
+function flash(b){const o=b.textContent;b.textContent='✓ コピー済';b.classList.add('done');setTimeout(()=>{b.textContent=o;b.classList.remove('done');},1400);}
+function opsText(){return `【運用フロー】\n${$('o-ops-flow').value}\n\n【聞き方の一次案】\n${$('o-ops-ask').value}`;}
+function casText(){return `【雑談・軽い指摘 対応】\n見極め：${$('o-cas-check').value}\nコツ：\n${$('o-cas-howto').value}\n一言：${$('o-cas-reply').value}`;}
+function isoText(){return `【ISO形式 手順書】\n1. 目的\n${$('o-iso-purpose').value}\n2. 適用範囲\n${$('o-iso-scope').value}\n3. 責任・権限\n${$('o-iso-resp').value}\n4. 手順\n${$('o-iso-proc').value}\n5. 記録・エビデンス\n${$('o-iso-rec').value}`;}
+document.addEventListener('click',e=>{const b=e.target.closest('.copybtn');if(!b)return;const k=b.dataset.copy;const v=k==='__ops'?opsText():k==='__cas'?casText():k==='__iso'?isoText():$(k).value;navigator.clipboard.writeText(v).then(()=>flash(b));});
+
+function markdown(){
+  const label=tone==='serious'?'🏫 法人・研修スクール版（現役エンジニア粒度）':'🍜 ラーメン屋版';
+  const extra = tone==='serious'
+    ? `\n\n## 📐 ISO形式（手順書）\n### 1. 目的\n${$('o-iso-purpose').value}\n### 2. 適用範囲\n${$('o-iso-scope').value}\n### 3. 責任・権限\n${$('o-iso-resp').value}\n### 4. 手順\n${$('o-iso-proc').value}\n### 5. 記録・エビデンス\n${$('o-iso-rec').value}`
+    : `\n\n## 💬 雑談・軽い指摘 対応\n- 見極め：${$('o-cas-check').value}\n- コツ：\n${$('o-cas-howto').value}\n- 一言：${$('o-cas-reply').value}`;
+  return `# 聞きに行くスタンス × 要件詰め（${label}）\n\n## 1. Why（なぜ）\n${$('o-why').value}\n\n## 2. What（何を）\n${$('o-what').value}\n\n## 3. How（どうやって）\n${$('o-how').value}\n\n## 🧠 意図\n${$('o-int').value}\n\n## 🗺 背景・前提\n${$('o-bg').value}\n\n## ⚠️ 例外\n${$('o-exc').value}\n\n## 📋 要件（完了の定義）\n${$('o-req').value}\n\n## 🔄 運用\n${opsText()}${extra}`;
+}
+/* ---- エクスポート / ダウンロード ---- */
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function ts(){return new Date().toISOString().slice(0,10).replace(/-/g,'');}
+function toneLabel(){return tone==='serious'?'法人・研修スクール版':'ラーメン屋版';}
+function dl(name,text,mime){const b=new Blob([text],{type:mime||'text/plain;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);}
+function btnDone(b,msg){const o=b.textContent;b.textContent=msg||'✓ 完了';setTimeout(()=>b.textContent=o,1500);}
+function pickLines(v,n){const a=(v||'').split('\n').map(s=>s.replace(/^[・\-\u2022\s]+/,'').trim()).filter(Boolean);return n?a.slice(0,n):a;}
+function privacyScan(t){const hits=[];[[/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/,'メールアドレス'],[/(株式会社|有限会社|合同会社|（株）|\(株\)|御中)/,'社名表記'],[/0\d{1,4}-?\d{1,4}-?\d{3,4}/,'電話番号らしき数字']].forEach(([re,n])=>{if(re.test(t))hits.push(n);});return hits;}
+function ensureClean(){const h=privacyScan(markdown());if(h.length)return confirm('⚠️ 個人情報・社名らしき表記（'+h.join('・')+'）が含まれている可能性があります。\n役割名（メイン講師／サブ講師／受講生）への置き換えをご確認ください。\n\nこのまま書き出しますか？');return true;}
+
+function buildSlack(){
+  const why=pickLines($('o-why').value,1)[0]||$('o-why').value.trim();
+  const req=pickLines($('o-req').value,3), exc=pickLines($('o-exc').value,2);
+  const ask=$('o-ops-ask').value.trim();
+  let s='（相談たたき台 / Slack貼り付け用）\n';
+  s+= ask || '以下の理解で進めます。相違あれば一言ください。なければこのまま進めます。';
+  s+='\n\n― 補足（必要なら）―';
+  if(why) s+='\n■ 背景: '+why;
+  if(req.length) s+='\n■ 満たすべき要件:\n'+req.map(r=>'  ・'+r).join('\n');
+  if(exc.length) s+='\n■ 確認したい例外:\n'+exc.map(r=>'  ・'+r).join('\n');
+  s+='\n\n※ 実名・社名は伏せ、役割名で記載しています。';
+  return s;
+}
+function buildCSV(){
+  const rows=[['項目','内容'],['版',toneLabel()],['場面',$('in-scene').value||'法人新卒研修'],
+    ['Why',$('o-why').value],['What',$('o-what').value],['How',$('o-how').value],['意図',$('o-int').value],
+    ['背景・前提',$('o-bg').value],['例外',$('o-exc').value],['要件',$('o-req').value],
+    ['運用フロー',$('o-ops-flow').value],['聞き方の一次案',$('o-ops-ask').value]];
+  if(tone==='serious'){
+    rows.push(['ISO:目的',$('o-iso-purpose').value],['ISO:適用範囲',$('o-iso-scope').value],['ISO:責任・権限',$('o-iso-resp').value],['ISO:手順',$('o-iso-proc').value],['ISO:記録・エビデンス',$('o-iso-rec').value]);
+  }else{
+    rows.push(['雑談:見極め',$('o-cas-check').value],['雑談:コツ',$('o-cas-howto').value],['雑談:一言',$('o-cas-reply').value]);
+  }
+  const q=v=>'"'+String(v||'').replace(/"/g,'""').replace(/\r?\n/g,' / ')+'"';
+  return '\uFEFF'+rows.map(r=>r.map(q).join(',')).join('\r\n');
+}
+function openPDF(){
+  const accent=tone==='serious'?'#159e85':'#E26A06';
+  const label=tone==='serious'?'🏫 法人・研修スクール版（現役エンジニア粒度）':'🍜 ラーメン屋版';
+  const sec=(t,b)=>`<h2>${t}</h2><div class="bd">${esc(b).replace(/\n/g,'<br>')}</div>`;
+  const extra = tone==='serious'
+    ? sec('📐 ISO形式：1. 目的',$('o-iso-purpose').value)+sec('2. 適用範囲',$('o-iso-scope').value)+sec('3. 責任・権限',$('o-iso-resp').value)+sec('4. 手順',$('o-iso-proc').value)+sec('5. 記録・エビデンス',$('o-iso-rec').value)
+    : sec('💬 雑談・軽い指摘 対応 — 見極め',$('o-cas-check').value)+sec('軽くさばくコツ',$('o-cas-howto').value)+sec('そのまま返せる一言',$('o-cas-reply').value);
+  const html='<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>うさうさ_スタンス要件詰め_pro_'+ts()+'</title>'+
+   '<style>body{font-family:"Yu Gothic UI","Hiragino Kaku Gothic ProN",sans-serif;color:#1B2A3A;line-height:1.7;padding:30px;max-width:760px;margin:auto}'+
+   'h1{font-size:1.3rem;border-bottom:3px solid '+accent+';padding-bottom:8px;margin-bottom:6px}'+
+   'h2{font-size:1rem;color:'+accent+';margin:16px 0 3px}.bd{white-space:normal}'+
+   '.badge{display:inline-block;background:'+accent+';color:#fff;border-radius:7px;padding:2px 10px;font-size:.8rem;margin:4px 0 8px}'+
+   '.scene{color:#555;font-size:.86rem;margin-bottom:6px}'+
+   '.ft{margin-top:26px;border-top:1px solid #ccc;padding-top:8px;color:#888;font-size:.76rem}'+
+   '@media print{body{padding:6px}}</style></head><body>'+
+   '<h1>聞きに行くスタンス × 要件詰め</h1><span class="badge">'+label+'</span>'+
+   '<div class="scene">場面：'+esc($('in-scene').value||'法人新卒研修')+'</div>'+
+   sec('1. Why（なぜ）',$('o-why').value)+sec('2. What（何を）',$('o-what').value)+sec('3. How（どうやって）',$('o-how').value)+
+   sec('🧠 意図',$('o-int').value)+sec('🗺 背景・前提',$('o-bg').value)+sec('⚠️ 例外',$('o-exc').value)+
+   sec('📋 要件（完了の定義）',$('o-req').value)+sec('🔄 運用フロー',$('o-ops-flow').value)+sec('🗣 聞き方の一次案',$('o-ops-ask').value)+extra+
+   '<div class="ft">🐰 うさうさ研修工房 ｜ 個人情報留意：実名・社名は記載せず役割名で。</div>'+
+   '<scr'+'ipt>window.onload=function(){setTimeout(function(){window.print();},300);}<\/scr'+'ipt></body></html>';
+  const w=window.open('','_blank'); if(!w){alert('PDF用の新しいタブを開けませんでした。ポップアップを許可してください。');return;}
+  w.document.write(html); w.document.close();
+}
+
+$('copy-md').addEventListener('click',e=>{if(!ensureClean())return;navigator.clipboard.writeText(markdown()).then(()=>btnDone(e.target,'✓ コピーしました'));});
+$('copy-slack').addEventListener('click',e=>{if(!ensureClean())return;navigator.clipboard.writeText(buildSlack()).then(()=>btnDone(e.target,'✓ コピーしました'));});
+$('dl-md').addEventListener('click',e=>{if(!ensureClean())return;dl('usausa_stance_pro_'+ts()+'.md',markdown(),'text/markdown;charset=utf-8');btnDone(e.target,'✓ DL');});
+$('dl-csv').addEventListener('click',e=>{if(!ensureClean())return;dl('usausa_stance_pro_'+ts()+'.csv',buildCSV(),'text/csv;charset=utf-8');btnDone(e.target,'✓ DL');});
+$('dl-slack').addEventListener('click',e=>{if(!ensureClean())return;dl('usausa_slack_pro_'+ts()+'.txt',buildSlack(),'text/plain;charset=utf-8');btnDone(e.target,'✓ DL');});
+$('dl-pdf').addEventListener('click',()=>{if(!ensureClean())return;openPDF();});
+</script>
+</body>
+</html>
